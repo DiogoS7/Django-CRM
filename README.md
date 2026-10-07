@@ -1,6 +1,18 @@
 # Django CRM
 
-A simple customer relationship manager built with Django and Bootstrap. Log in, then add, search, view, edit, and delete customer records.
+A customer relationship manager built with Django. Track customers through a sales pipeline, log every call, email, and meeting, and see where everything stands from a single dashboard.
+
+![Home dashboard](docs/screenshots/home.png)
+
+## Screenshots
+
+| Customer list | Customer record |
+| --- | --- |
+| ![Customer list with status filters and sortable columns](docs/screenshots/customers.png) | ![Customer record with stage path and activity timeline](docs/screenshots/customer.png) |
+
+| Edit form | Login |
+| --- | --- |
+| ![Customer edit form grouped into sections](docs/screenshots/edit.png) | ![Login page](docs/screenshots/login.png) |
 
 ## Features
 
@@ -81,6 +93,16 @@ Settings are read from a `.env` file in the project root. See `.env.example` for
 python manage.py test
 ```
 
+## What I learned
+
+This project started in 2023 as a tutorial-based CRUD app and was later rebuilt to follow production practices:
+
+- Keeping secrets out of source control with environment variables
+- Protecting destructive actions with POST requests and confirmation pages
+- Modeling a sales pipeline and an activity history with Django's ORM, including annotations and conditional ordering
+- Writing automated tests for access control, validation, and core workflows
+- Designing a consistent interface around a small, purposeful color system
+
 ## Project structure
 
 ```
@@ -90,4 +112,5 @@ customers/     The CRM app: models, forms, views, tests
   management/commands/seed_customers.py
 templates/     Shared templates (base layout, login, registration)
 static/css/    App styles
+docs/          Screenshots for this README
 ```
