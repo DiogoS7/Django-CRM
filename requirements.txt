@@ -1,0 +1,5 @@
+Django>=5.2,<6.0
+python-dotenv>=1.0
+
+# Optional: only needed if you set DB_ENGINE=mysql in .env
+# mysqlclient>=2.2

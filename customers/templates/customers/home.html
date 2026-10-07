@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-icon icon-home" aria-hidden="true"><i class="bi bi-house-door"></i></div>
+  <div>
+    <div class="page-header-kicker">Home</div>
+    <h1 class="page-header-title">Good to see you, {{ user.first_name|default:user.username }}</h1>
+  </div>
+</div>
+
+<section class="panel mb-3">
+  <div class="panel-header">
+    <h2 class="panel-title">Pipeline</h2>
+    <a href="{% url 'customers:list' %}" class="panel-link">View all {{ total }} customers</a>
+  </div>
+  <div class="panel-body">
+    {% if total %}
+      <div class="pipeline-bar" role="img" aria-label="Customers by status">
+        {% for stage in pipeline %}
+          {% if stage.count %}
+            <a href="{% url 'customers:list' %}?status={{ stage.value }}" class="pipeline-seg seg-{{ stage.value }}"
+               style="flex-grow: {{ stage.count }}" title="{{ stage.label }}: {{ stage.count }}"></a>
+          {% endif %}
+        {% endfor %}
+      </div>
+      <div class="pipeline-legend">
+        {% for stage in pipeline %}
+          <a href="{% url 'customers:list' %}?status={{ stage.value }}" class="pipeline-stat">
+            <span class="dot seg-{{ stage.value }}" aria-hidden="true"></span>
+            <span class="pipeline-stat-label">{{ stage.label }}</span>
+            <span class="pipeline-stat-count">{{ stage.count }}</span>
+            <span class="pipeline-stat-pct">{{ stage.percent }}%</span>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-secondary mb-2">Your pipeline is empty. Add a customer to see it here.</p>
+      <a href="{% url 'customers:create' %}" class="btn btn-primary btn-sm">New customer</a>
+    {% endif %}
+  </div>
+</section>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <section class="panel h-100">
+      <div class="panel-header">
+        <h2 class="panel-title">My open customers <span class="count-pill">{{ my_open_count }}</span></h2>
+        <a href="{% url 'customers:list' %}?view=mine" class="panel-link">View all</a>
+      </div>
+      {% if my_open %}
+        <div class="table-responsive">
+          <table class="table data-table mb-0">
+            <thead>
+              <tr><th>Name</th><th>Company</th><th>Status</th><th class="d-none d-md-table-cell">Last activity</th></tr>
+            </thead>
+            <tbody>
+              {% for c in my_open %}
+                <tr data-href="{{ c.get_absolute_url }}">
+                  <td><a href="{{ c.get_absolute_url }}" class="record-link">{{ c.full_name }}</a></td>
+                  <td>{{ c.company|default:"—" }}</td>
+                  <td>{% include "includes/status_badge.html" with status=c.status label=c.get_status_display %}</td>
+                  <td class="d-none d-md-table-cell text-secondary text-nowrap">
+                    {% if c.last_activity %}{{ c.last_activity|timesince }} ago{% else %}None yet{% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="panel-body text-secondary">
+          You don't own any open customers. Assign yourself as owner on a lead to track it here.
+        </div>
+      {% endif %}
+    </section>
+  </div>
+
+  <div class="col-lg-5">
+    <section class="panel h-100">
+      <div class="panel-header">
+        <h2 class="panel-title">Recent activity</h2>
+      </div>
+      <div class="panel-body">
+        {% if recent_activity %}
+          <ol class="timeline timeline-compact">
+            {% for a in recent_activity %}
+              <li class="timeline-item">
+                <span class="timeline-icon kind-{{ a.kind }}" aria-hidden="true"><i class="bi {{ a.icon }}"></i></span>
+                <div class="timeline-content">
+                  <div class="timeline-title">{{ a.subject }}</div>
+                  <div class="timeline-meta">
+                    {{ a.get_kind_display }} with <a href="{{ a.customer.get_absolute_url }}">{{ a.customer.full_name }}</a>
+                    · {{ a.created_at|timesince }} ago
+                  </div>
+                </div>
+              </li>
+            {% endfor %}
+          </ol>
+        {% else %}
+          <p class="text-secondary mb-0">No activity yet. Calls, emails, and meetings you log on a customer appear here.</p>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+</div>
+
+<section class="panel mt-3">
+  <div class="panel-header">
+    <h2 class="panel-title">Recently created</h2>
+    <a href="{% url 'customers:list' %}?sort=-created" class="panel-link">View all</a>
+  </div>
+  {% if recent_customers %}
+    <div class="table-responsive">
+      <table class="table data-table mb-0">
+        <thead><tr><th>Name</th><th>Company</th><th>Status</th><th class="d-none d-md-table-cell">Created</th></tr></thead>
+        <tbody>
+          {% for c in recent_customers %}
+            <tr data-href="{{ c.get_absolute_url }}">
+              <td><a href="{{ c.get_absolute_url }}" class="record-link">{{ c.full_name }}</a></td>
+              <td>{{ c.company|default:"—" }}</td>
+              <td>{% include "includes/status_badge.html" with status=c.status label=c.get_status_display %}</td>
+              <td class="d-none d-md-table-cell text-secondary">{{ c.created_at|date:"j M Y" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="panel-body text-secondary">No customers yet.</div>
+  {% endif %}
+</section>
+{% endblock %}

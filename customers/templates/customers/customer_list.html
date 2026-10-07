@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}Customers{% endblock %}
+{% block content %}
+<section class="panel list-view">
+  <div class="list-view-header">
+    <div class="page-header mb-0">
+      <div class="page-header-icon icon-customers" aria-hidden="true"><i class="bi bi-person-vcard"></i></div>
+      <div>
+        <div class="page-header-kicker">Customers</div>
+        <div class="dropdown">
+          <button class="list-view-switch" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            {% if view == "mine" %}My customers{% else %}All customers{% endif %}
+            <i class="bi bi-chevron-down" aria-hidden="true"></i>
+          </button>
+          <ul class="dropdown-menu shadow-sm">
+            <li><a class="dropdown-item{% if view == 'all' %} active{% endif %}" href="{% querystring view=None page=None %}">All customers</a></li>
+            <li><a class="dropdown-item{% if view == 'mine' %} active{% endif %}" href="{% querystring view='mine' page=None %}">My customers</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="list-view-actions">
+      <a href="{% url 'customers:create' %}" class="btn btn-primary btn-sm">New</a>
+    </div>
+  </div>
+
+  <div class="list-view-toolbar">
+    <div class="list-view-summary">
+      {{ page.paginator.count }} item{{ page.paginator.count|pluralize }}
+      · Sorted by {{ sort_label }}{% if sort_descending %} (descending){% endif %}
+      {% if status or query %}
+        · Filtered{% if query %} by “{{ query }}”{% endif %}
+        · <a href="{% querystring q=None status=None page=None %}">Clear filters</a>
+      {% endif %}
+    </div>
+    <form method="get" class="list-search" role="search">
+      {% if view == "mine" %}<input type="hidden" name="view" value="mine">{% endif %}
+      {% if status %}<input type="hidden" name="status" value="{{ status }}">{% endif %}
+      <input type="hidden" name="sort" value="{{ request.GET.sort|default:'name' }}">
+      <i class="bi bi-search" aria-hidden="true"></i>
+      <label for="list-q" class="visually-hidden">Search this list</label>
+      <input type="search" id="list-q" name="q" value="{{ query }}" placeholder="Search this list…" class="form-control form-control-sm">
+    </form>
+  </div>
+
+  <div class="status-filters" role="group" aria-label="Filter by status">
+    <a href="{% querystring status=None page=None %}" class="filter-chip{% if not status %} active{% endif %}">All statuses</a>
+    {% for value, label in status_choices %}
+      <a href="{% querystring status=value page=None %}" class="filter-chip{% if status == value %} active{% endif %}">
+        <span class="dot seg-{{ value }}" aria-hidden="true"></span>{{ label }}
+      </a>
+    {% endfor %}
+  </div>
+
+  {% if page.object_list %}
+    <div class="table-responsive">
+      <table class="table data-table list-table mb-0">
+        <thead>
+          <tr>
+            {% for key, col in columns.items %}
+              <th scope="col" class="{% if key == 'owner' or key == 'activity' %}d-none d-lg-table-cell{% elif key == 'created' %}d-none d-xl-table-cell{% elif key == 'company' %}d-none d-md-table-cell{% endif %}"
+                  {% if col.active %}aria-sort="{% if col.descending %}descending{% else %}ascending{% endif %}"{% endif %}>
+                <a href="{% querystring sort=col.next_sort page=None %}" class="sort-link{% if col.active %} active{% endif %}">
+                  {{ col.label }}
+                  {% if col.active %}<i class="bi {% if col.descending %}bi-arrow-down{% else %}bi-arrow-up{% endif %}" aria-hidden="true"></i>{% endif %}
+                </a>
+              </th>
+              {% if key == "name" %}<th scope="col" class="d-none d-sm-table-cell">Email</th><th scope="col" class="d-none d-xl-table-cell">Phone</th>{% endif %}
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in page %}
+            <tr data-href="{{ c.get_absolute_url }}">
+              <td>
+                <a href="{{ c.get_absolute_url }}" class="record-link">{{ c.full_name }}</a>
+                {% if c.job_title %}<div class="cell-sub">{{ c.job_title }}</div>{% endif %}
+              </td>
+              <td class="d-none d-sm-table-cell"><a href="mailto:{{ c.email }}" class="text-reset">{{ c.email }}</a></td>
+              <td class="d-none d-xl-table-cell text-nowrap">{{ c.phone }}</td>
+              <td class="d-none d-md-table-cell">{{ c.company|default:"—" }}</td>
+              <td>{% include "includes/status_badge.html" with status=c.status label=c.get_status_display %}</td>
+              <td class="d-none d-lg-table-cell">
+                {% if c.owner %}{{ c.owner.get_full_name|default:c.owner.username }}{% else %}<span class="text-secondary">Unassigned</span>{% endif %}
+              </td>
+              <td class="d-none d-lg-table-cell text-secondary text-nowrap">
+                {% if c.last_activity %}{{ c.last_activity|date:"j M Y" }}{% else %}—{% endif %}
+              </td>
+              <td class="d-none d-xl-table-cell text-secondary text-nowrap">{{ c.created_at|date:"j M Y" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if page.has_other_pages %}
+      <div class="list-view-footer">
+        <span class="text-secondary">
+          {{ page.start_index }}–{{ page.end_index }} of {{ page.paginator.count }}
+        </span>
+        <div class="btn-group btn-group-sm">
+          {% if page.has_previous %}
+            <a class="btn btn-outline-secondary" href="{% querystring page=page.previous_page_number %}">Previous</a>
+          {% else %}
+            <span class="btn btn-outline-secondary disabled">Previous</span>
+          {% endif %}
+          {% if page.has_next %}
+            <a class="btn btn-outline-secondary" href="{% querystring page=page.next_page_number %}">Next</a>
+          {% else %}
+            <span class="btn btn-outline-secondary disabled">Next</span>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  {% elif query or status or view == "mine" %}
+    <div class="empty-state">
+      <i class="bi bi-search" aria-hidden="true"></i>
+      <p class="mb-2">No customers match these filters.</p>
+      <a href="{% url 'customers:list' %}">Show all customers</a>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <i class="bi bi-person-plus" aria-hidden="true"></i>
+      <p class="mb-3">No customers yet. Create your first one to start your pipeline.</p>
+      <a href="{% url 'customers:create' %}" class="btn btn-primary btn-sm">New customer</a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

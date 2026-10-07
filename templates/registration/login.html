@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Log in{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-brand">
+    <span class="app-logo-mark" aria-hidden="true">D</span>
+    <span class="app-logo-text">Django CRM</span>
+  </div>
+  <div class="auth-panel">
+    <h1 class="h4 fw-bold mb-4">Log in to your account</h1>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% if form.errors %}
+        <div class="alert alert-danger py-2">That username and password don't match. Check them and try again.</div>
+      {% endif %}
+      <div class="mb-3">
+        <label class="form-label" for="id_username">Username</label>
+        <input type="text" name="username" id="id_username" class="form-control" autocomplete="username"
+               value="{{ form.username.value|default:'' }}" required autofocus>
+      </div>
+      <div class="mb-4">
+        <label class="form-label" for="id_password">Password</label>
+        <input type="password" name="password" id="id_password" class="form-control" autocomplete="current-password" required>
+      </div>
+      <input type="hidden" name="next" value="{{ next }}">
+      <button type="submit" class="btn btn-primary w-100">Log in</button>
+    </form>
+  </div>
+  <p class="text-center text-secondary mt-3">No account yet? <a href="{% url 'register' %}">Create one</a></p>
+</div>
+{% endblock %}

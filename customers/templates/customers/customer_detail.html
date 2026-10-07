@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}{{ customer.full_name }}{% endblock %}
+{% block content %}
+
+{# Highlights panel #}
+<section class="panel highlights">
+  <div class="highlights-top">
+    <div class="page-header mb-0">
+      <span class="avatar avatar-lg" aria-hidden="true">{{ customer.initials }}</span>
+      <div>
+        <div class="page-header-kicker">Customer</div>
+        <h1 class="page-header-title">{{ customer.full_name }}</h1>
+      </div>
+    </div>
+    <div class="highlights-actions">
+      <a href="mailto:{{ customer.email }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-envelope me-1"></i>Email</a>
+      <a href="{% url 'customers:update' customer.pk %}" class="btn btn-outline-secondary btn-sm">Edit</a>
+      <div class="dropdown">
+        <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="More actions">
+          <i class="bi bi-three-dots"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+          {% if customer.status != "inactive" %}
+            <li>
+              <form method="post" action="{% url 'customers:set_status' customer.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="status" value="inactive">
+                <button type="submit" class="dropdown-item"><i class="bi bi-archive me-2"></i>Mark as inactive</button>
+              </form>
+            </li>
+          {% endif %}
+          <li><a class="dropdown-item text-danger" href="{% url 'customers:delete' customer.pk %}"><i class="bi bi-trash me-2"></i>Delete</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <dl class="highlights-fields">
+    <div><dt>Company</dt><dd>{{ customer.company|default:"—" }}</dd></div>
+    <div><dt>Title</dt><dd>{{ customer.job_title|default:"—" }}</dd></div>
+    <div><dt>Status</dt><dd>{% include "includes/status_badge.html" with status=customer.status label=customer.get_status_display %}</dd></div>
+    <div><dt>Phone</dt><dd><a href="tel:{{ customer.phone }}">{{ customer.phone }}</a></dd></div>
+    <div><dt>Email</dt><dd><a href="mailto:{{ customer.email }}">{{ customer.email }}</a></dd></div>
+    <div><dt>Owner</dt><dd>{% if customer.owner %}{{ customer.owner.get_full_name|default:customer.owner.username }}{% else %}Unassigned{% endif %}</dd></div>
+  </dl>
+</section>
+
+{# Stage path #}
+<section class="panel path-panel">
+  {% if customer.status == "inactive" %}
+    <div class="path-inactive">
+      <span><i class="bi bi-archive me-2" aria-hidden="true"></i>This customer is inactive.</span>
+      <form method="post" action="{% url 'customers:set_status' customer.pk %}">
+        {% csrf_token %}
+        <input type="hidden" name="status" value="lead">
+        <button type="submit" class="btn btn-sm btn-outline-secondary">Reopen as lead</button>
+      </form>
+    </div>
+  {% else %}
+    <form method="post" action="{% url 'customers:set_status' customer.pk %}" class="path-row" aria-label="Customer stage">
+      {% csrf_token %}
+      <div class="path">
+      {% for step in path %}
+        <button type="submit" name="status" value="{{ step.value }}" class="path-step path-{{ step.state }}{% if step.state == 'current' %} seg-{{ step.value }}{% endif %}"
+                {% if step.state == "current" %}aria-current="step" disabled{% endif %}
+                title="{% if step.state == 'current' %}Current stage{% else %}Move to {{ step.label }}{% endif %}">
+          {% if step.state == "done" %}<i class="bi bi-check-lg" aria-hidden="true"></i>{% endif %}
+          <span>{{ step.label }}</span>
+        </button>
+      {% endfor %}
+      </div>
+      {% if next_stage %}
+        <button type="submit" name="status" value="{{ next_stage.value }}" class="btn btn-primary btn-sm path-next">
+          <i class="bi bi-check2 me-1" aria-hidden="true"></i>Mark as {{ next_stage.label }}
+        </button>
+      {% else %}
+        <span class="path-done-note"><i class="bi bi-check-circle-fill me-1" aria-hidden="true"></i>Converted</span>
+      {% endif %}
+    </form>
+  {% endif %}
+</section>
+
+<div class="row g-3">
+  {# Details #}
+  <div class="col-lg-7">
+    <section class="panel h-100">
+      <div class="panel-tabs" role="tablist">
+        <span class="panel-tab active" role="tab" aria-selected="true">Details</span>
+      </div>
+      <div class="panel-body">
+        <h3 class="section-title">Contact information</h3>
+        <dl class="detail-grid">
+          <div><dt>Name</dt><dd>{{ customer.full_name }}</dd></div>
+          <div><dt>Company</dt><dd>{{ customer.company|default:"—" }}</dd></div>
+          <div><dt>Email</dt><dd><a href="mailto:{{ customer.email }}">{{ customer.email }}</a></dd></div>
+          <div><dt>Title</dt><dd>{{ customer.job_title|default:"—" }}</dd></div>
+          <div><dt>Phone</dt><dd><a href="tel:{{ customer.phone }}">{{ customer.phone }}</a></dd></div>
+          <div><dt>Owner</dt><dd>{% if customer.owner %}{{ customer.owner.get_full_name|default:customer.owner.username }}{% else %}Unassigned{% endif %}</dd></div>
+        </dl>
+
+        <h3 class="section-title">Address</h3>
+        <dl class="detail-grid">
+          <div><dt>Street</dt><dd>{{ customer.address }}</dd></div>
+          <div><dt>City</dt><dd>{{ customer.city }}</dd></div>
+          <div><dt>Postal code</dt><dd>{{ customer.zipcode }}</dd></div>
+          <div><dt>State / region</dt><dd>{{ customer.state|default:"—" }}</dd></div>
+        </dl>
+
+        <h3 class="section-title">Notes</h3>
+        <p class="notes mb-0">{% if customer.notes %}{{ customer.notes|linebreaksbr }}{% else %}<span class="text-secondary">No notes.</span>{% endif %}</p>
+
+        <h3 class="section-title">System information</h3>
+        <dl class="detail-grid">
+          <div><dt>Created by</dt><dd>{{ customer.created_by.username|default:"—" }}, {{ customer.created_at|date:"j M Y, H:i" }}</dd></div>
+          <div><dt>Last modified</dt><dd>{{ customer.updated_at|date:"j M Y, H:i" }}</dd></div>
+        </dl>
+      </div>
+    </section>
+  </div>
+
+  {# Activity #}
+  <div class="col-lg-5">
+    <section class="panel h-100" id="activity">
+      <div class="panel-tabs" role="tablist">
+        <span class="panel-tab active" role="tab" aria-selected="true">Activity</span>
+      </div>
+      <div class="panel-body">
+        <form method="post" action="{% url 'customers:log_activity' customer.pk %}" class="activity-form" novalidate>
+          {% csrf_token %}
+          <div class="activity-kinds" role="radiogroup" aria-label="Activity type">
+            {% for radio in activity_form.kind %}
+              <label class="kind-option">
+                <input type="radio" name="{{ radio.data.name }}" value="{{ radio.data.value }}"
+                       {% if radio.data.selected %}checked{% endif %} class="visually-hidden">
+                <span>{{ radio.choice_label }}</span>
+              </label>
+            {% endfor %}
+          </div>
+          {% for error in activity_form.kind.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+          <label for="{{ activity_form.subject.id_for_label }}" class="visually-hidden">Subject</label>
+          {{ activity_form.subject }}
+          {% for error in activity_form.subject.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+          <label for="{{ activity_form.details.id_for_label }}" class="visually-hidden">Details</label>
+          {{ activity_form.details }}
+          <div class="text-end"><button type="submit" class="btn btn-primary btn-sm">Log activity</button></div>
+        </form>
+
+        {% if activities %}
+          <ol class="timeline">
+            {% for a in activities %}
+              <li class="timeline-item">
+                <span class="timeline-icon kind-{{ a.kind }}" aria-hidden="true"><i class="bi {{ a.icon }}"></i></span>
+                <div class="timeline-content">
+                  <div class="timeline-title">{{ a.subject }}</div>
+                  <div class="timeline-meta">
+                    {{ a.get_kind_display }}{% if a.created_by %} by {{ a.created_by.get_full_name|default:a.created_by.username }}{% endif %}
+                    · <time datetime="{{ a.created_at|date:'c' }}" title="{{ a.created_at|date:'j M Y, H:i' }}">{{ a.created_at|timesince }} ago</time>
+                  </div>
+                  {% if a.details %}<div class="timeline-details">{{ a.details|linebreaksbr }}</div>{% endif %}
+                </div>
+              </li>
+            {% endfor %}
+          </ol>
+        {% else %}
+          <p class="text-secondary mt-3 mb-0">No activity yet. Log a call, email, or meeting above to start the history.</p>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

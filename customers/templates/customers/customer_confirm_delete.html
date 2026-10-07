@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Delete {{ customer.full_name }}{% endblock %}
+{% block content %}
+<div class="panel confirm-panel">
+  <div class="panel-body">
+    <h1 class="h5 fw-bold mb-3">Delete {{ customer.full_name }}?</h1>
+    <p class="mb-0">This permanently deletes the customer and their full activity history. You can't undo this.</p>
+  </div>
+  <form method="post" class="form-page-footer">
+    {% csrf_token %}
+    <a href="{{ customer.get_absolute_url }}" class="btn btn-outline-secondary">Cancel</a>
+    <button type="submit" class="btn btn-danger">Delete</button>
+  </form>
+</div>
+{% endblock %}
