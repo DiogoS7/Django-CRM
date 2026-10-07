@@ -1,5 +1,9 @@
 # Django CRM
 
+[![Tests](https://github.com/DiogoS7/Django-CRM/actions/workflows/tests.yml/badge.svg)](https://github.com/DiogoS7/Django-CRM/actions/workflows/tests.yml)
+![Python](https://img.shields.io/badge/python-3.10%20%7C%203.12%20%7C%203.13-2f5d50)
+![Django](https://img.shields.io/badge/django-5.2-2f5d50)
+
 A customer relationship manager built with Django. Track customers through a sales pipeline, log every call, email, and meeting, and see where everything stands from a single dashboard.
 
 ![Home dashboard](docs/screenshots/home.png)
@@ -92,6 +96,8 @@ Settings are read from a `.env` file in the project root. See `.env.example` for
 ```bash
 python manage.py test
 ```
+
+Tests also run automatically on GitHub Actions for every push and pull request, on Python 3.10, 3.12, and 3.13.
 
 ## What I learned
 
